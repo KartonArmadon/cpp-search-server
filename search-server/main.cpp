@@ -69,19 +69,6 @@ public:
 		++document_count_;
 	}
 
-	/// <summary>
-	/// for tests
-	/// </summary>
-	void print_map_map() {
-		for (const auto& [word, id_tf] : word_to_document_freqs_)
-		{
-			cout << "*** "s << word << " ***"s << endl;
-			for (const auto& [id, tf] : id_tf) {
-				cout << "in doc with id = "s << id << "; tf = " << tf << endl;
-			}
-		}
-	}
-
 	vector<Document> FindTopDocuments(const string& raw_query) const {
 		const Query query_words = ParseQuery(raw_query);
 		auto matched_documents = FindAllDocuments(query_words);
@@ -110,9 +97,6 @@ private:
 
 	bool IsStopWord(const string& word) const {
 		return stop_words_.count(word) > 0;
-	}
-
-	void calculateTFIDF() {
 	}
 
 	vector<string> SplitIntoWordsNoStop(const string& text) const {
@@ -181,7 +165,6 @@ SearchServer CreateSearchServer() {
 	for (int document_id = 0; document_id < document_count; ++document_id) {
 		search_server.AddDocument(document_id, ReadLine());
 	}
-	search_server.print_map_map();
 	return search_server;
 }
 
