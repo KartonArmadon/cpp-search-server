@@ -106,7 +106,6 @@ enum class DocumentStatus {
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 class SearchServer {
-#pragma region public
 public:
 	template <typename StringContainer>
 	explicit SearchServer(const StringContainer& stop_words)
@@ -230,8 +229,7 @@ public:
 		else
 			return documents_ids_.at(number);
 	}
-#pragma endregion
-#pragma region private
+
 private:
 	struct DocumentData {
 		int rating;
@@ -374,5 +372,4 @@ private:
 			return int(ch) >= 0 && int(ch) <= 31;
 			});
 	}
-#pragma endregion
 };
