@@ -1,30 +1,31 @@
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <map>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-#include <optional>
+#include <algorithm> 
+#include <numeric>
+#include <cmath> 
+#include <iostream> 
+#include <map> 
+#include <set> 
+#include <string> 
+#include <utility> 
+#include <vector> 
+#include <optional> 
 
 using namespace std;
 
-/// <summary>
-/// Считывает строку из стандартного потока ввода (std::cin)
-/// </summary>
-/// <returns>Считанная из потока строка</returns>
+/// <summary> 
+/// Считывает строку из стандартного потока ввода (std::cin) 
+/// </summary> 
+/// <returns>Считанная из потока строка</returns> 
 string ReadLine() {
 	string s;
 	getline(cin, s);
 	return s;
 }
 
-/// <summary>
-/// <para>Считывает из стандартного потока ввода (std::cin) целочисленное значение</para>
-/// <para>Все последующие символы в строке игнорируются</para>
-/// </summary>
-/// <returns>Считанное из потока число</returns>
+/// <summary> 
+/// <para>Считывает из стандартного потока ввода (std::cin) целочисленное значение</para> 
+/// <para>Все последующие символы в строке игнорируются</para> 
+/// </summary> 
+/// <returns>Считанное из потока число</returns> 
 int ReadLineWithNumber() {
 	int result;
 	cin >> result;
@@ -32,12 +33,12 @@ int ReadLineWithNumber() {
 	return result;
 }
 
-/// <summary>
-/// <para>Разбивает строку в набор слов</para>
-/// <para>В качестве разделителя используется символ пробела</para>
-/// </summary>
-/// <param name="text"></param>
-/// <returns></returns>
+/// <summary> 
+/// <para>Разбивает строку в набор слов</para> 
+/// <para>В качестве разделителя используется символ пробела</para> 
+/// </summary> 
+/// <param name="text"></param> 
+/// <returns></returns> 
 vector<string> SplitIntoWords(const string& text) {
 	vector<string> words;
 	string word;
@@ -73,12 +74,12 @@ struct Document {
 	int rating = 0;
 };
 
-/// <summary>
-/// Преобразует контейнер, содержащий строки, в набор уникальных строк
-/// </summary>
-/// <typeparam name="StringContainer">Тип-контейнер</typeparam>
-/// <param name="strings">Контейнер, содержащий строковые элементы</param>
-/// <returns>Множество (не повторяющиеся элементы, отсортированные по возрастанию) строк</returns>
+/// <summary> 
+/// Преобразует контейнер, содержащий строки, в набор уникальных строк 
+/// </summary> 
+/// <typeparam name="StringContainer">Тип-контейнер</typeparam> 
+/// <param name="strings">Контейнер, содержащий строковые элементы</param> 
+/// <returns>Множество (не повторяющиеся элементы, отсортированные по возрастанию) строк</returns> 
 template <typename StringContainer>
 set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
 	set<string> non_empty_strings;
@@ -90,13 +91,13 @@ set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
 	return non_empty_strings;
 }
 
-/// <summary>
-/// <para>Статусы документа:</para>
-/// <para>- Актуальный</para>
-/// <para>- Неактуальный</para>
-/// <para>- Заблокированный</para>
-/// <para>- Удалённый</para>
-/// </summary>
+/// <summary> 
+/// <para>Статусы документа:</para> 
+/// <para>- Актуальный</para> 
+/// <para>- Неактуальный</para> 
+/// <para>- Заблокированный</para> 
+/// <para>- Удалённый</para> 
+/// </summary> 
 enum class DocumentStatus {
 	ACTUAL,
 	IRRELEVANT,
@@ -104,15 +105,15 @@ enum class DocumentStatus {
 	REMOVED,
 };
 
+const float DELTA_FOR_CHECK_IF_FLOATS_ARE_EQUAL = 1e-6;
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 class SearchServer {
 public:
 	template <typename StringContainer>
 	explicit SearchServer(const StringContainer& stop_words)
 		: stop_words_(MakeUniqueNonEmptyStrings(stop_words)) {
-		for (const auto& word : stop_words_) {
-			if (!IsValidWord(word))
-				throw invalid_argument("Одно из стоп-слов содержит недопустимые символы");
+		if (any_of(stop_words_.begin(), stop_words_.end(), [=](const string& word) { return !IsValidWord(word); })) {
+			throw invalid_argument("Одно из стоп-слов содержит недопустимые символы");
 		}
 	}
 
@@ -121,13 +122,13 @@ public:
 	{
 	}
 
-	/// <summary>
-	/// Добавляет документ в поисковую систему
-	/// </summary>
-	/// <param name="document_id">Идентификатор документа</param>
-	/// <param name="document">Содержимое (текстовое) документа</param>
-	/// <param name="status">Статус документа</param>
-	/// <param name="ratings">Оценки документа</param>
+	/// <summary> 
+	/// Добавляет документ в поисковую систему 
+	/// </summary> 
+	/// <param name="document_id">Идентификатор документа</param> 
+	/// <param name="document">Содержимое (текстовое) документа</param> 
+	/// <param name="status">Статус документа</param> 
+	/// <param name="ratings">Оценки документа</param> 
 	void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) {
 
 		if (document_id < 0) throw invalid_argument("Попытка добавить документ с отрицательным id");
@@ -148,27 +149,24 @@ public:
 		documents_ids_.push_back(document_id);
 	}
 
-	/// <summary>
-	/// Находит MAX_RESULT_DOCUMENT_COUNT документов, удовлетворяющих запросу по указанной функции-поиска.
-	/// </summary>
-	/// <typeparam name="DocumentPredicate"></typeparam>
-	/// <param name="raw_query">Фраза-запрос для поиска</param>
-	/// <param name="document_predicate">Функция-поиска по которой будет производиться отбор документов</param>
-	/// <returns>MAX_RESULT_DOCUMENT_COUNT документов, удовлетворяющих условиям поиска</returns>
+	/// <summary> 
+	/// Находит MAX_RESULT_DOCUMENT_COUNT документов, удовлетворяющих запросу по указанной функции-поиска. 
+	/// </summary> 
+	/// <typeparam name="DocumentPredicate"></typeparam> 
+	/// <param name="raw_query">Фраза-запрос для поиска</param> 
+	/// <param name="document_predicate">Функция-поиска по которой будет производиться отбор документов</param> 
+	/// <returns>MAX_RESULT_DOCUMENT_COUNT документов, удовлетворяющих условиям поиска</returns> 
 	template <typename DocumentPredicate>
 	vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate document_predicate) const {
-		Query query;
-		ParseQuery(raw_query, query);
+		Query query = ParseQuery(raw_query);
 		auto matched_documents = FindAllDocuments(query, document_predicate);
 
 		sort(matched_documents.begin(), matched_documents.end(),
 			[](const Document& lhs, const Document& rhs) {
-				if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+				if (abs(lhs.relevance - rhs.relevance) < DELTA_FOR_CHECK_IF_FLOATS_ARE_EQUAL) {
 					return lhs.rating > rhs.rating;
 				}
-				else {
-					return lhs.relevance > rhs.relevance;
-				}
+				return lhs.relevance > rhs.relevance;
 			});
 		if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
 			matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
@@ -176,27 +174,26 @@ public:
 		return matched_documents;
 	}
 
-	/// <summary>
-	/// Находит MAX_RESULT_DOCUMENT_COUNT документов, удовлетворяющих запросу
-	/// </summary>
-	/// <param name="raw_query">Фраза-запрос для поиска</param>
-	/// <param name="status">Среди документов с каким статусом производить поиск</param>
-	/// <returns>MAX_RESULT_DOCUMENT_COUNT документов, удовлетворяющих условиям поиска</returns>
+	/// <summary> 
+	/// Находит MAX_RESULT_DOCUMENT_COUNT документов, удовлетворяющих запросу 
+	/// </summary> 
+	/// <param name="raw_query">Фраза-запрос для поиска</param> 
+	/// <param name="status">Среди документов с каким статусом производить поиск</param> 
+	/// <returns>MAX_RESULT_DOCUMENT_COUNT документов, удовлетворяющих условиям поиска</returns> 
 	vector<Document> FindTopDocuments(const string& raw_query, DocumentStatus status = DocumentStatus::ACTUAL) const {
 		return FindTopDocuments(raw_query, [status](int document_id, DocumentStatus document_status, int rating) {
 			return document_status == status;
 			});
 	}
 
-	/// <summary>
-	/// Поиск слов из запроса в документе
-	/// </summary>
-	/// <param name="raw_query">Фраза-запрос</param>
-	/// <param name="document_id">Номер документа для поиска</param>
-	/// <returns>Пару значений: список слов из запроса, содержащихся в документе; статус документа</returns>
+	/// <summary> 
+	/// Поиск слов из запроса в документе 
+	/// </summary> 
+	/// <param name="raw_query">Фраза-запрос</param> 
+	/// <param name="document_id">Номер документа для поиска</param> 
+	/// <returns>Пару значений: список слов из запроса, содержащихся в документе; статус документа</returns> 
 	tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const {
-		Query query;
-		ParseQuery(raw_query, query);
+		Query query = ParseQuery(raw_query);
 		vector<string> matched_words;
 		for (const string& word : query.plus_words) {
 			if (word_to_document_freqs_.count(word) == 0) {
@@ -224,10 +221,7 @@ public:
 	}
 
 	int GetDocumentId(int number) {
-		if (number >= documents_ids_.size())
-			throw out_of_range("В системе меньше документов чем вы думаете!");
-		else
-			return documents_ids_.at(number);
+		return documents_ids_.at(number);
 	}
 
 private:
@@ -244,9 +238,9 @@ private:
 		return stop_words_.count(word) > 0;
 	}
 
-	/// <summary>
-	/// Разбивает строку на слова игнорируя стоп-слова
-	/// </summary>
+	/// <summary> 
+	/// Разбивает строку на слова игнорируя стоп-слова 
+	/// </summary> 
 	vector<string> SplitIntoWordsNoStop(const string& text) const {
 		vector<string> words;
 		for (const string& word : SplitIntoWords(text)) {
@@ -261,10 +255,7 @@ private:
 		if (ratings.empty()) {
 			return 0;
 		}
-		int rating_sum = 0;
-		for (const int rating : ratings) {
-			rating_sum += rating;
-		}
+		int rating_sum = accumulate(ratings.begin(), ratings.end(), 0);
 		return rating_sum / static_cast<int>(ratings.size());
 	}
 
@@ -279,9 +270,9 @@ private:
 		set<string> minus_words;
 	};
 
-	void ParseQuery(const string& raw_query, Query& query) const {
+	Query ParseQuery(const string& raw_query) const {
+		Query query;
 		const vector<string> query_words = SplitIntoWords(raw_query);
-		if (!IsValidQuery(query_words)) throw invalid_argument("Фраза-запрос составлена некорректно");
 
 		for (const string& word : query_words) {
 			if (!IsValidWord(word)) throw invalid_argument("Слово в запросе содержит спец-символы");
@@ -295,31 +286,23 @@ private:
 				}
 			}
 		}
+		return query;
 	}
 
 	QueryWord ParseQueryWord(string word) const {
+
+		if (word.length() == 1 && word == "-")
+			throw invalid_argument("Фраза-запрос составлена некорректно");
+		if (word.length() > 1)
+			if (word[0] == '-' && word[1] == '-')
+				throw invalid_argument("Фраза-запрос составлена некорректно");
+
 		bool is_minus = false;
 		if (word[0] == '-') {
 			is_minus = true;
 			word = word.substr(1);
 		}
 		return { word, is_minus, IsStopWord(word) };
-	}
-
-	/// <summary>
-	/// Проверяет запрос на корректность
-	/// </summary>
-	/// <param name="raw_query">запрос</param>
-	/// <returns>false - запрос содержит ошибку; true - запрос корректный</returns>
-	bool IsValidQuery(const vector<string>& query_words) const {
-		for (const auto& word : query_words) {
-			if (word.length() == 1 && word == "-")
-				return false;
-			if (word.length() > 1)
-				if (word[0] == '-' && word[1] == '-')
-					return false;
-		}
-		return true;
 	}
 
 	double ComputeWordInverseDocumentFreq(const string& word) const {
@@ -329,14 +312,14 @@ private:
 	template <typename DocumentPredicate>
 	vector<Document> FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const {
 		map<int, double> document_to_relevance;
-		//перебираем все "плюс-слова" из запроса (query)
+		//перебираем все "плюс-слова" из запроса (query) 
 		for (const string& word : query.plus_words) {
-			//если текущего слова (word) нет в "базе" (word_to_document_freqs_)
+			//если текущего слова (word) нет в "базе" (word_to_document_freqs_) 
 			if (word_to_document_freqs_.count(word) == 0) {
 				continue;
 			}
 			const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
-			//перебираем все пары [id документа, частота слова в документе] для текущего слова (word)
+			//перебираем все пары [id документа, частота слова в документе] для текущего слова (word) 
 			for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {
 				const auto& document_data = documents_.at(document_id);
 				if (document_predicate(document_id, document_data.status, document_data.rating)) {
@@ -362,11 +345,11 @@ private:
 		return matched_documents;
 	}
 
-	/// <summary>
-	/// Проверяет слово на допустимость. Слово не должно содержать специальных символов
-	/// </summary>
-	/// <param name="word">Слово для проверки</param>
-	/// <returns>false - слово содержит спец. символы; true - слово корректное</returns>
+	/// <summary> 
+	/// Проверяет слово на допустимость. Слово не должно содержать специальных символов 
+	/// </summary> 
+	/// <param name="word">Слово для проверки</param> 
+	/// <returns>false - слово содержит спец. символы; true - слово корректное</returns> 
 	bool IsValidWord(const string& word) const {
 		return none_of(word.begin(), word.end(), [](char ch) {
 			return int(ch) >= 0 && int(ch) <= 31;
