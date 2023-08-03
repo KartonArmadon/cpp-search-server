@@ -7,24 +7,37 @@
 
 using namespace std;
 
-int main() {
-	SearchServer search_server("and in at"s);
-	RequestQueue request_queue(search_server);
-	search_server.AddDocument(1, "curly cat curly tail"s, DocumentStatus::ACTUAL, { 7, 2, 7 });
-	search_server.AddDocument(2, "curly dog and fancy collar"s, DocumentStatus::ACTUAL, { 1, 2, 3 });
-	search_server.AddDocument(3, "big cat fancy collar "s, DocumentStatus::ACTUAL, { 1, 2, 8 });
-	search_server.AddDocument(4, "big dog sparrow Eugene"s, DocumentStatus::ACTUAL, { 1, 3, 2 });
-	search_server.AddDocument(5, "big dog sparrow Vasiliy"s, DocumentStatus::ACTUAL, { 1, 1, 1 });
-	// 1439 запросов с нулевым результатом
-	for (int i = 0; i < 1439; ++i) {
-		request_queue.AddFindRequest("empty request"s);
+void PrintMatchDocumentResult(int document_id, const vector<string>& words, DocumentStatus status) {
+	cout << "{ "s
+		<< "document_id = "s << document_id << ", "s
+		<< "status = "s << static_cast<int>(status) << ", "s
+		<< "words ="s;
+	for (const string& word : words) {
+		cout << ' ' << word;
 	}
-	// все еще 1439 запросов с нулевым результатом
-	request_queue.AddFindRequest("curly dog"s);
-	// новые сутки, первый запрос удален, 1438 запросов с нулевым результатом
-	request_queue.AddFindRequest("big collar"s);
-	// первый запрос удален, 1437 запросов с нулевым результатом
-	request_queue.AddFindRequest("sparrow"s);
-	cout << "Total empty requests: "s << request_queue.GetNoResultRequests() << endl;
-	return 0;
+	cout << "}"s << endl;
+}
+
+int main() {
+	SearchServer search_server("and in on"s);
+	search_server.AddDocument(0, "white cat and modern ring"s, DocumentStatus::ACTUAL, { 8, -3 });
+	search_server.AddDocument(1, "puffy cat puffy tail cat"s, DocumentStatus::ACTUAL, { 7, 2, 7 });
+	search_server.AddDocument(2, "nice dog cool eyes"s, DocumentStatus::ACTUAL, { 5, -12, 2, 1 });
+	search_server.AddDocument(3, "nice bird jenny"s, DocumentStatus::BANNED, { 9 });
+	const int document_count = search_server.GetDocumentCount();
+	for (int document_id = 0; document_id < document_count; ++document_id) {
+		const auto [words, status] = search_server.MatchDocument("puffy cat"s, document_id);
+		PrintMatchDocumentResult(document_id, words, status);
+	}
+	cout << endl << endl;
+	auto result = search_server.FindTopDocuments("cat -white");
+	cout << result.size() << endl;
+	for (const auto& item : result) {
+		cout << "{ "s
+			<< "document_id = "s << item.id << ", "s
+			<< "rating = "s << item.rating << ", "s
+			<< "relevance = "s << item.relevance;
+		cout << "}"s << endl;
+	}
+    return 0;
 }

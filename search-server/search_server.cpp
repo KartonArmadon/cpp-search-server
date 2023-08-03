@@ -1,7 +1,13 @@
 //Вставьте сюда своё решение из урока «Очередь запросов» темы «Стек, очередь, дек».
 #include "search_server.h"
 
+#include <cmath>
+
 #pragma region PUBLIC
+
+SearchServer::SearchServer(const std::string& stop_words_text) :
+	SearchServer(SplitIntoWords(stop_words_text)) { }
+
 void SearchServer::AddDocument(int document_id, const std::string& document, DocumentStatus status,
 	const std::vector<int>& ratings) {
 	if ((document_id < 0) || (documents_.count(document_id) > 0)) {
@@ -80,6 +86,24 @@ std::vector<std::string> SearchServer::SplitIntoWordsNoStop(const std::string& t
 	return words;
 }
 
+bool SearchServer::IsValidWord(const std::string& word) {
+	// A valid word must not contain special characters
+	return none_of(word.begin(), word.end(), [](char c) {
+		return c >= '\0' && c < ' ';
+		});
+}
+
+int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
+	if (ratings.empty()) {
+		return 0;
+	}
+	int rating_sum = 0;
+	for (const int rating : ratings) {
+		rating_sum += rating;
+	}
+	return rating_sum / static_cast<int>(ratings.size());
+}
+
 SearchServer::QueryWord SearchServer::ParseQueryWord(const std::string& text) const {
 	if (text.empty()) {
 		throw std::invalid_argument("Query word is empty"s);
@@ -114,6 +138,6 @@ SearchServer::Query SearchServer::ParseQuery(const std::string& text) const {
 }
 
 double SearchServer::ComputeWordInverseDocumentFreq(const std::string& word) const {
-	return log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
+	return std::log(GetDocumentCount() * 1.0 / word_to_document_freqs_.at(word).size());
 }
 #pragma endregion
